@@ -1,4 +1,4 @@
-package goWebSock
+package internal
 
 type GoWebSock struct {
 	SecWebSocketVersion uint8

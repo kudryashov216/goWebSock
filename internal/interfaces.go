@@ -1,4 +1,4 @@
-package goWebSock
+package internal
 
 type WebSock interface {
 	Connect()

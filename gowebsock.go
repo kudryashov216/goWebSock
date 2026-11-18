@@ -1,8 +1,10 @@
 package goWebSock
 
+import "github.com/kudryashov216/goWebSock/internal"
+
 func CreateNewWebSocket(GET, Host, Upgrade, Connection, SecWebSocketKey, Origin string, SecWebSocketVersion uint8) GoWebSock {
 
-	var ws GoWebSock
+	var ws internal.GoWebSock
 
 	ws.GET = GET
 	ws.Host = Host
