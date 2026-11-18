@@ -1,8 +1,11 @@
 package goWebSock
 
-import "github.com/kudryashov216/goWebSock/internal/websocket"
+import (
+	"github.com/kudryashov216/goWebSock/internal/enums"
+	"github.com/kudryashov216/goWebSock/internal/websocket"
+)
 
-func CreateNewWebSocket(GET, Host, Upgrade, Connection, SecWebSocketKey, Origin string, SecWebSocketVersion uint8) websocket.WebSock {
+func CreateNewWebSocket(GET, Host, Connection, SecWebSocketKey, Origin string, Upgrade enums.TypeConn, SecWebSocketVersion uint8) websocket.WebSock {
 
 	var ws websocket.GoWebSock
 
