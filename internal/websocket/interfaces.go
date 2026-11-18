@@ -1,4 +1,4 @@
-package internal
+package websocket
 
 type WebSock interface {
 	Connect()
