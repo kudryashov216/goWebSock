@@ -1,6 +1,7 @@
 package goWebSock
 
 import (
+	"errors"
 	"net"
 
 	"github.com/kudryashov216/goWebSock/internal/data"
@@ -20,9 +21,17 @@ func CreateWebSockServer(conn net.Conn) (websock.WebSock, error) {
 	headers := string(buff[:n])
 
 	if !data.HeadersIsValid(headers) {
-		return nil, nil
+		return nil, errors.New("The headers are not valid for creating a websocket.")
 	}
 
-	return nil, nil
+	response := ""
+
+	webSock := websock.GoWebSock{
+		Conn:     conn,
+		Version:  websock.CURRENTVERSION,
+		Response: response,
+	}
+
+	return webSock, nil
 
 }
