@@ -1,22 +1,28 @@
 package goWebSock
 
 import (
-	"github.com/kudryashov216/goWebSock/internal/enums"
-	"github.com/kudryashov216/goWebSock/internal/websocket"
+	"net"
+
+	"github.com/kudryashov216/goWebSock/internal/data"
+	"github.com/kudryashov216/goWebSock/internal/websock"
 )
 
-func CreateNewWebSocket(GET, Host, Connection, SecWebSocketKey, Origin string, Upgrade enums.TypeConn, SecWebSocketVersion uint8) websocket.WebSock {
+func CreateWebSockServer(conn net.Conn) (websock.WebSock, error) {
 
-	var ws websocket.GoWebSock
+	buff := make([]byte, 4096)
 
-	ws.GET = GET
-	ws.Host = Host
-	ws.Origin = Origin
-	ws.Upgrade = Upgrade
-	ws.Connection = Connection
-	ws.SecWebSocketKey = SecWebSocketKey
-	ws.SecWebSocketVersion = SecWebSocketVersion
+	n, err := conn.Read(buff)
 
-	return ws
+	if err != nil {
+		return nil, err
+	}
+
+	headers := string(buff[:n])
+
+	if !data.HeadersIsValid(headers) {
+		return nil, nil
+	}
+
+	return nil, nil
 
 }
