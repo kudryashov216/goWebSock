@@ -28,7 +28,14 @@ func main() {
 			continue
 		}
 
-		goWebSock.CreateWebSockServer(conn)
+		webSock, err := goWebSock.CreateWebSockServer(conn)
+
+		if err != nil {
+			fmt.Printf("%s\n\r", err.Error())
+			continue
+		}
+
+		fmt.Println(webSock)
 
 	}
 

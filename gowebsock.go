@@ -1,7 +1,10 @@
 package goWebSock
 
 import (
+	"crypto/sha1"
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"net"
 
 	"github.com/kudryashov216/goWebSock/internal/data"
@@ -20,11 +23,18 @@ func CreateWebSockServer(conn net.Conn) (websock.WebSock, error) {
 
 	headers := string(buff[:n])
 
-	if !data.HeadersIsValid(headers) {
+	headerMap, ok := data.HeadersIsValid(headers)
+
+	if !ok {
 		return nil, errors.New("The headers are not valid for creating a websocket.")
 	}
 
-	response := ""
+	hash := sha1.New()
+	hash.Write([]byte((*headerMap)["Sec-WebSocket-Key"] + websock.WSGUID))
+
+	accept := base64.StdEncoding.EncodeToString(hash.Sum(nil))
+
+	response := fmt.Sprintf("%s 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: %s\r\n", (*headerMap)["Get"], accept)
 
 	webSock := websock.GoWebSock{
 		Conn:     conn,
@@ -32,6 +42,8 @@ func CreateWebSockServer(conn net.Conn) (websock.WebSock, error) {
 		Response: response,
 	}
 
-	return webSock, nil
+	webSock.SetConnect()
+
+	return &webSock, nil
 
 }

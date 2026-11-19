@@ -1,5 +1,6 @@
 package websock
 
 type WebSock interface {
-	Connect()
+	SetConnect()
+	Close()
 }

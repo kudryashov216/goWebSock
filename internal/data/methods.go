@@ -1,18 +1,19 @@
 package data
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/kudryashov216/goWebSock/internal/websock"
 )
 
-func HeadersIsValid(headers string) bool {
+func HeadersIsValid(headers string) (*map[string]string, bool) {
 
 	var countHeadings uint8 = 0
 
 	headersMap := GetHeadersToMap(headers)
 
-	for key, value := range headersMap {
+	for key, value := range *headersMap {
 
 		switch key {
 		case "GET":
@@ -20,7 +21,7 @@ func HeadersIsValid(headers string) bool {
 			countHeadings++
 
 			if value == "null" {
-				return false
+				return nil, false
 			}
 
 		case "Host":
@@ -28,7 +29,7 @@ func HeadersIsValid(headers string) bool {
 			countHeadings++
 
 			if value == "null" {
-				return false
+				return nil, false
 			}
 
 		case "Connection":
@@ -36,7 +37,7 @@ func HeadersIsValid(headers string) bool {
 			countHeadings++
 
 			if value != "Upgrade" {
-				return false
+				return nil, false
 			}
 
 		case "Upgrade":
@@ -44,7 +45,7 @@ func HeadersIsValid(headers string) bool {
 			countHeadings++
 
 			if value != "websocket" {
-				return false
+				return nil, false
 			}
 
 		case "Sec-WebSocket-Key":
@@ -52,7 +53,7 @@ func HeadersIsValid(headers string) bool {
 			countHeadings++
 
 			if value == "null" {
-				return false
+				return nil, false
 			}
 
 		case "Sec-WebSocket-Version":
@@ -60,7 +61,7 @@ func HeadersIsValid(headers string) bool {
 			countHeadings++
 
 			if value != websock.CurrentVersion() {
-				return false
+				return nil, false
 			}
 
 		}
@@ -68,14 +69,14 @@ func HeadersIsValid(headers string) bool {
 	}
 
 	if countHeadings < websock.NUMBERHEADINGS || countHeadings > websock.NUMBERHEADINGS {
-		return false
+		return nil, false
 	}
 
-	return true
+	return headersMap, true
 
 }
 
-func GetHeadersToMap(headers string) map[string]string {
+func GetHeadersToMap(headers string) *map[string]string {
 
 	headersMap := make(map[string]string)
 
@@ -102,6 +103,8 @@ func GetHeadersToMap(headers string) map[string]string {
 
 	}
 
-	return headersMap
+	fmt.Println(headersMap)
+
+	return &headersMap
 
 }
