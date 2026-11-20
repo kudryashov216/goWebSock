@@ -4,19 +4,23 @@ func CurrentVersion() string {
 	return CURRENTVERSION
 }
 
-func (ws *GoWebSock) SetConnect() error {
+func (ws *GoWebSock) SetConnect(headers string) error {
 
-	_, err := ws.Conn.Write([]byte(ws.Response))
+	_, err := ws.Conn.Write([]byte(headers))
 
 	return err
 
 }
 
+func (ws *GoWebSock) Read(buff []byte) (n int, err error) {
+
+	return ws.Conn.Read(buff)
+
+}
+
 func (ws *GoWebSock) Send(data string) (int, error) {
 
-	n, err := ws.Write([]byte(data))
-
-	return n, err
+	return ws.Conn.Write([]byte(data))
 
 }
 

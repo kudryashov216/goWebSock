@@ -73,15 +73,14 @@ func CreateWebSockServer(conn net.Conn, headers string) (websock.WebSock, error)
 
 	accept := base64.StdEncoding.EncodeToString(hash.Sum(nil))
 
-	response := fmt.Sprintf("%s 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: %s\r\n\r\n", (*headerMap)["get"], accept)
+	responseHeaders := fmt.Sprintf("%s 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: %s\r\n\r\n", (*headerMap)["get"], accept)
 
 	webSock := websock.GoWebSock{
-		Conn:     conn,
-		Version:  websock.CURRENTVERSION,
-		Response: response,
+		Conn:    conn,
+		Version: websock.CURRENTVERSION,
 	}
 
-	err = webSock.SetConnect()
+	err = webSock.SetConnect(responseHeaders)
 
 	return &webSock, err
 

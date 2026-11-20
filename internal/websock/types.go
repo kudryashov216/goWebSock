@@ -6,6 +6,5 @@ import (
 
 type GoWebSock struct {
 	net.Conn
-	Version  string
-	Response string
+	Version string
 }

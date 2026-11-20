@@ -2,74 +2,75 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"net"
+	"net/http"
 
 	"github.com/kudryashov216/goWebSock"
 )
 
 func main() {
 
-	listener, err := net.Listen("tcp", ":8000")
+	// listener, err := net.Listen("tcp", ":8000")
 
-	if err != nil {
-		log.Fatalf("%s\n", err.Error())
-	}
+	// if err != nil {
+	// 	log.Fatalf("%s\n", err.Error())
+	// }
 
-	defer listener.Close()
+	// defer listener.Close()
 
-	// http.HandleFunc("/chat", Handler)
-	// http.ListenAndServe(":8001", nil)
+	http.HandleFunc("/chat", Handler)
+	http.ListenAndServe(":8001", nil)
 
-	for {
+	// for {
 
-		conn, err := listener.Accept()
+	// 	conn, err := listener.Accept()
 
-		go func(c net.Conn) {
+	// 	go func(c net.Conn) {
 
-			ws, err := goWebSock.CreateWebSockServer(c, "")
+	// 		ws, err := goWebSock.CreateWebSockServer(c, "")
 
-			if err != nil {
-				log.Println("handshake error:", err)
-				return
-			}
+	// 		if err != nil {
+	// 			log.Println("handshake error:", err)
+	// 			return
+	// 		}
 
-			defer ws.Close()
+	// 		defer ws.Close()
 
-			buf := make([]byte, 4096)
+	// 		buf := make([]byte, 4096)
 
-			for {
-				n, err := c.Read(buf)
-				if err != nil {
-					log.Println("connection closed:", err)
-					return
-				}
-				log.Printf("got %d bytes: %b", n, buf[:n])
-			}
+	// 		for {
+	// 			n, err := c.Read(buf)
+	// 			if err != nil {
+	// 				log.Println("connection closed:", err)
+	// 				return
+	// 			}
+	// 			log.Printf("got %d bytes: %b", n, buf[:n])
+	// 		}
 
-		}(conn)
+	// 	}(conn)
 
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
+	// 	if err != nil {
+	// 		fmt.Println(err)
+	// 		continue
+	// 	}
 
-	}
+	// }
 
 }
 
-// func Handler(rw http.ResponseWriter, r *http.Request) {
+func Handler(rw http.ResponseWriter, r *http.Request) {
 
-// 	var reqRW goWebSock.RequestRW
+	var reqRW goWebSock.RequestRW
 
-// 	reqRW.Request = r
-// 	reqRW.ResponseWriter = rw
+	reqRW.Request = r
+	reqRW.ResponseWriter = rw
 
-// 	_, err := goWebSock.CreateWebSockServerFromRequestRW(&reqRW)
+	webSock, err := goWebSock.CreateWebSockServerFromRequestRW(&reqRW)
 
-// 	if err != nil {
-// 		fmt.Println(err.Error())
-// 		return
-// 	}
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
 
-// }
+	webSock.Send("Hello")
+
+}

@@ -1,7 +1,7 @@
 package websock
 
 type WebSock interface {
-	SetConnect() error
+	SetConnect(headers string) error
 	Send(data string) (int, error)
 	Close() error
 }
