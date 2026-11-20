@@ -20,9 +20,11 @@ func (ws *GoWebSock) Read(buff []byte) (n int, err error) {
 
 func (ws *GoWebSock) Send(data string) (int, error) {
 
-	payload := []byte(data)
+	var (
+		header, payload []byte
+	)
 
-	var header []byte
+	payload = []byte(data)
 
 	header = append(header, 0x81)
 
