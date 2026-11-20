@@ -30,6 +30,7 @@ func CreateWebSockServerFromRequestRW(reqRW *RequestRW) (websock.WebSock, error)
 	headersMap := reqRW.Request.Header
 
 	headersMap["GET"] = []string{reqRW.Request.Proto}
+	headersMap["Host"] = []string{reqRW.Request.Host}
 
 	headers := data.HeaderToString(&headersMap)
 

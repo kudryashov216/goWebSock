@@ -16,9 +16,10 @@ func HeadersIsValid(headers string) bool {
 	for key, value := range *headersMap {
 
 		keyLow := strings.ToLower(key)
-		keyLow = strings.TrimSpace(key)
+		keyLow = strings.TrimSpace(keyLow)
+
 		valueLow := strings.ToLower(value)
-		valueLow = strings.TrimSpace(value)
+		valueLow = strings.TrimSpace(valueLow)
 
 		switch keyLow {
 		case "get":
@@ -71,6 +72,10 @@ func HeadersIsValid(headers string) bool {
 
 		}
 
+	}
+
+	if countHeadings < websock.COUNTHEADERS || countHeadings > websock.COUNTHEADERS {
+		return false
 	}
 
 	return true
