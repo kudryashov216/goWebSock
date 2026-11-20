@@ -72,7 +72,7 @@ func Handler(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = webSock.Send("Салам")
+	_, err = webSock.Send("Hi. This websocket is written in the Go programming language. Welcome!")
 
 	if err != nil {
 		log.Println(err.Error())
