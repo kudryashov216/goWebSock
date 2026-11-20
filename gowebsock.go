@@ -6,36 +6,74 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 
 	"github.com/kudryashov216/goWebSock/internal/data"
 	"github.com/kudryashov216/goWebSock/internal/websock"
 )
 
-func CreateWebSockServer(conn net.Conn) (websock.WebSock, error) {
+func CreateWebSockServerFromRequestRW(reqRW *RequestRW) (websock.WebSock, error) {
 
-	buff := make([]byte, 4096)
+	hj, ok := reqRW.ResponseWriter.(http.Hijacker)
 
-	n, err := conn.Read(buff)
+	if !ok {
+		return nil, errors.New("Failed to create a websocket.")
+	}
+
+	conn, _, err := hj.Hijack()
 
 	if err != nil {
+		conn.Close()
 		return nil, err
 	}
 
-	headers := string(buff[:n])
+	headersMap := reqRW.Request.Header
 
-	headerMap, ok := data.HeadersIsValid(headers)
+	headersMap["GET"] = []string{reqRW.Request.Proto}
+
+	headers := data.HeaderToString(&headersMap)
+
+	ws, err := CreateWebSockServer(conn, headers)
+
+	return ws, err
+
+}
+
+func CreateWebSockServer(conn net.Conn, headers string) (websock.WebSock, error) {
+
+	var err error
+
+	if len(headers) == 0 {
+
+		var buff []byte = make([]byte, 4096)
+
+		n, err := conn.Read(buff)
+
+		if err != nil {
+			conn.Close()
+			return nil, err
+		}
+
+		headers = string(buff[:n])
+
+	}
+
+	ok := data.HeadersIsValid(headers)
 
 	if !ok {
 		conn.Close()
 		return nil, errors.New("The headers are not valid for creating a websocket.")
 	}
 
+	headerMap := data.GetHeadersToMap(headers)
+	headerMap = data.KeyMapToLower(headerMap)
+
 	hash := sha1.New()
-	hash.Write([]byte(headerMap["Sec-WebSocket-Key"] + websock.WSGUID))
+	hash.Write([]byte((*headerMap)["sec-websocket-key"] + websock.WSGUID))
 
 	accept := base64.StdEncoding.EncodeToString(hash.Sum(nil))
 
-	response := fmt.Sprintf("%s 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: %s\r\n\r\n", headerMap["GET"], accept)
+	response := fmt.Sprintf("%s 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: %s\r\n\r\n", (*headerMap)["get"], accept)
 
 	webSock := websock.GoWebSock{
 		Conn:     conn,
@@ -45,10 +83,6 @@ func CreateWebSockServer(conn net.Conn) (websock.WebSock, error) {
 
 	err = webSock.SetConnect()
 
-	if err != nil {
-		return nil, err
-	}
-
-	return &webSock, nil
+	return &webSock, err
 
 }

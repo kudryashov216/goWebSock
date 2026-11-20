@@ -18,13 +18,16 @@ func main() {
 
 	defer listener.Close()
 
+	// http.HandleFunc("/chat", Handler)
+	// http.ListenAndServe(":8001", nil)
+
 	for {
 
 		conn, err := listener.Accept()
 
 		go func(c net.Conn) {
 
-			ws, err := goWebSock.CreateWebSockServer(c)
+			ws, err := goWebSock.CreateWebSockServer(c, "")
 
 			if err != nil {
 				log.Println("handshake error:", err)
@@ -34,13 +37,14 @@ func main() {
 			defer ws.Close()
 
 			buf := make([]byte, 4096)
+
 			for {
 				n, err := c.Read(buf)
 				if err != nil {
 					log.Println("connection closed:", err)
 					return
 				}
-				log.Printf("got %d bytes: %x", n, buf[:n])
+				log.Printf("got %d bytes: %b", n, buf[:n])
 			}
 
 		}(conn)
@@ -53,3 +57,19 @@ func main() {
 	}
 
 }
+
+// func Handler(rw http.ResponseWriter, r *http.Request) {
+
+// 	var reqRW goWebSock.RequestRW
+
+// 	reqRW.Request = r
+// 	reqRW.ResponseWriter = rw
+
+// 	_, err := goWebSock.CreateWebSockServerFromRequestRW(&reqRW)
+
+// 	if err != nil {
+// 		fmt.Println(err.Error())
+// 		return
+// 	}
+
+// }

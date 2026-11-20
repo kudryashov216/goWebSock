@@ -1,12 +1,13 @@
 package data
 
 import (
+	"net/http"
 	"strings"
 
 	"github.com/kudryashov216/goWebSock/internal/websock"
 )
 
-func HeadersIsValid(headers string) (map[string]string, bool) {
+func HeadersIsValid(headers string) bool {
 
 	var countHeadings uint8 = 0
 
@@ -14,67 +15,65 @@ func HeadersIsValid(headers string) (map[string]string, bool) {
 
 	for key, value := range *headersMap {
 
-		key = strings.TrimSpace(key)
-		value = strings.TrimSpace(value)
+		keyLow := strings.ToLower(key)
+		keyLow = strings.TrimSpace(key)
+		valueLow := strings.ToLower(value)
+		valueLow = strings.TrimSpace(value)
 
-		switch key {
-		case "GET":
-
-			countHeadings++
-
-			if value == "null" {
-				return nil, false
-			}
-
-		case "Host":
+		switch keyLow {
+		case "get":
 
 			countHeadings++
 
 			if value == "null" {
-				return nil, false
+				return false
 			}
 
-		case "Connection":
+		case "host":
 
 			countHeadings++
 
-			if value != "Upgrade" {
-				return nil, false
+			if valueLow == "null" {
+				return false
 			}
 
-		case "Upgrade":
+		case "connection":
 
 			countHeadings++
 
-			if value != "websocket" {
-				return nil, false
+			if valueLow != "upgrade" {
+				return false
 			}
 
-		case "Sec-WebSocket-Key":
+		case "upgrade":
 
 			countHeadings++
 
-			if value == "null" {
-				return nil, false
+			if valueLow != "websocket" {
+				return false
 			}
 
-		case "Sec-WebSocket-Version":
+		case "sec-websocket-key":
 
 			countHeadings++
 
-			if value != websock.CurrentVersion() {
-				return nil, false
+			if valueLow == "null" {
+				return false
+			}
+
+		case "sec-websocket-version":
+
+			countHeadings++
+
+			if valueLow != websock.CurrentVersion() {
+				return false
 			}
 
 		}
 
 	}
 
-	if countHeadings < websock.NUMBERHEADINGS || countHeadings > websock.NUMBERHEADINGS {
-		return nil, false
-	}
-
-	return *headersMap, true
+	return true
 
 }
 
@@ -106,5 +105,50 @@ func GetHeadersToMap(headers string) *map[string]string {
 	}
 
 	return &headersMap
+
+}
+
+func HeaderToString(header *http.Header) string {
+
+	var (
+		readyString string
+		countItems  uint16
+	)
+
+	for key, values := range *header {
+
+		countItems = uint16(len(values) - 1)
+
+		readyString += key + ": "
+
+		for i, value := range values {
+
+			readyString += value
+
+			if uint16(i) < countItems {
+				readyString += ","
+			}
+
+			if uint16(i) >= countItems {
+				readyString += "\n"
+			}
+
+		}
+
+	}
+
+	return readyString
+
+}
+
+func KeyMapToLower(map_ *map[string]string) *map[string]string {
+
+	newMap := make(map[string]string)
+
+	for key, value := range *map_ {
+		newMap[strings.ToLower(key)] = value
+	}
+
+	return &newMap
 
 }
