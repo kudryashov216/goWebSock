@@ -1,6 +1,6 @@
 package websock
 
 type WebSock interface {
-	SetConnect()
-	Close()
+	SetConnect() error
+	Close() error
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"net"
 
@@ -23,19 +22,33 @@ func main() {
 
 		conn, err := listener.Accept()
 
-		if err == io.EOF {
-			fmt.Println("Клиент разорвал соединение!")
-			continue
-		}
+		go func(c net.Conn) {
 
-		webSock, err := goWebSock.CreateWebSockServer(conn)
+			ws, err := goWebSock.CreateWebSockServer(c)
+
+			if err != nil {
+				log.Println("handshake error:", err)
+				return
+			}
+
+			defer ws.Close()
+
+			buf := make([]byte, 4096)
+			for {
+				n, err := c.Read(buf)
+				if err != nil {
+					log.Println("connection closed:", err)
+					return
+				}
+				log.Printf("got %d bytes: %x", n, buf[:n])
+			}
+
+		}(conn)
 
 		if err != nil {
-			fmt.Printf("%s\n\r", err.Error())
+			fmt.Println(err)
 			continue
 		}
-
-		fmt.Println(webSock)
 
 	}
 

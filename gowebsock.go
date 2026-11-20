@@ -26,15 +26,16 @@ func CreateWebSockServer(conn net.Conn) (websock.WebSock, error) {
 	headerMap, ok := data.HeadersIsValid(headers)
 
 	if !ok {
+		conn.Close()
 		return nil, errors.New("The headers are not valid for creating a websocket.")
 	}
 
 	hash := sha1.New()
-	hash.Write([]byte((*headerMap)["Sec-WebSocket-Key"] + websock.WSGUID))
+	hash.Write([]byte(headerMap["Sec-WebSocket-Key"] + websock.WSGUID))
 
 	accept := base64.StdEncoding.EncodeToString(hash.Sum(nil))
 
-	response := fmt.Sprintf("%s 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: %s\r\n", (*headerMap)["Get"], accept)
+	response := fmt.Sprintf("%s 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: %s\r\n\r\n", headerMap["GET"], accept)
 
 	webSock := websock.GoWebSock{
 		Conn:     conn,
@@ -42,7 +43,11 @@ func CreateWebSockServer(conn net.Conn) (websock.WebSock, error) {
 		Response: response,
 	}
 
-	webSock.SetConnect()
+	err = webSock.SetConnect()
+
+	if err != nil {
+		return nil, err
+	}
 
 	return &webSock, nil
 

@@ -1,13 +1,14 @@
 package websock
 
-func (ws *GoWebSock) SetConnect() {
+func (ws *GoWebSock) SetConnect() error {
 
-	ws.Conn.Write([]byte(ws.Response))
+	_, err := ws.Conn.Write([]byte(ws.Response))
+	return err
 
 }
 
-func (ws *GoWebSock) Close() {
-
+func (ws *GoWebSock) Close() error {
+	return ws.Conn.Close()
 }
 
 func CurrentVersion() string {

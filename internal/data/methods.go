@@ -1,19 +1,21 @@
 package data
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/kudryashov216/goWebSock/internal/websock"
 )
 
-func HeadersIsValid(headers string) (*map[string]string, bool) {
+func HeadersIsValid(headers string) (map[string]string, bool) {
 
 	var countHeadings uint8 = 0
 
 	headersMap := GetHeadersToMap(headers)
 
 	for key, value := range *headersMap {
+
+		key = strings.TrimSpace(key)
+		value = strings.TrimSpace(value)
 
 		switch key {
 		case "GET":
@@ -72,7 +74,7 @@ func HeadersIsValid(headers string) (*map[string]string, bool) {
 		return nil, false
 	}
 
-	return headersMap, true
+	return *headersMap, true
 
 }
 
@@ -98,12 +100,10 @@ func GetHeadersToMap(headers string) *map[string]string {
 				keyValue[1] = strings.Split(strings.TrimSpace(keyValue[1]), " ")[1]
 			}
 
-			headersMap[strings.TrimRight(keyValue[0], ":")] = keyValue[1]
+			headersMap[strings.TrimRight(keyValue[0], ":")] = strings.Replace(keyValue[1], "\r", "", 1)
 		}
 
 	}
-
-	fmt.Println(headersMap)
 
 	return &headersMap
 
