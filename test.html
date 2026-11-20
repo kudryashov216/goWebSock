@@ -1,0 +1,28 @@
+<pre id="log"></pre>
+<button id="connect">Connect</button>
+<button id="send">Send Ping</button>
+
+<script>
+  const log = (msg) => {
+    const el = document.getElementById('log');
+    el.textContent += msg + '\n';
+    el.scrollTop = el.scrollHeight;
+  };
+
+  let ws;
+
+  document.getElementById('connect').onclick = () => {
+    log('Connecting...');
+    ws = new WebSocket('ws://localhost:8001/chat');
+    ws.onopen = () => log('✅ OPEN');
+    ws.onmessage = (e) => log('📩 ' + e.data);
+    ws.onclose = (e) => log(`❌ CLOSED code=${e.code} reason=${e.reason}`);
+    ws.onerror = (e) => log('💥 ERROR');
+  };
+
+  document.getElementById('send').onclick = () => {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    ws.send('ping');
+    log('📤 ping');
+  };
+</script>
