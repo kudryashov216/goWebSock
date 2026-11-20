@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/kudryashov216/goWebSock"
@@ -71,6 +72,11 @@ func Handler(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	webSock.Send("Hello")
+	_, err = webSock.Send("Салам")
+
+	if err != nil {
+		log.Println(err.Error())
+		webSock.Close()
+	}
 
 }

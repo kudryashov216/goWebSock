@@ -20,7 +20,37 @@ func (ws *GoWebSock) Read(buff []byte) (n int, err error) {
 
 func (ws *GoWebSock) Send(data string) (int, error) {
 
-	return ws.Conn.Write([]byte(data))
+	payload := []byte(data)
+
+	var header []byte
+
+	header = append(header, 0x81)
+
+	switch {
+
+	case len(payload) <= 125:
+
+		header = append(header, byte(len(payload)))
+
+	case len(payload) <= 65535:
+
+		header = append(header, 126, byte(len(payload)>>8), byte(len(payload)))
+
+	default:
+
+		length := uint64(len(payload))
+
+		header = append(header, 127)
+
+		for i := 7; i >= 0; i-- {
+			header = append(header, byte(length>>(8*i)))
+		}
+
+	}
+
+	frame := append(header, payload...)
+
+	return ws.Conn.Write(frame)
 
 }
 
