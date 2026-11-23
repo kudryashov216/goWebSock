@@ -12,6 +12,12 @@ import (
 	"github.com/kudryashov216/goWebSock/internal/websock"
 )
 
+func NewRequestRW(rw http.ResponseWriter, r *http.Request) *RequestRW {
+
+	return &RequestRW{ResponseWriter: rw, Request: r}
+
+}
+
 func CreateWebSockServerFromRequestRW(reqRW *RequestRW) (websock.WebSock, error) {
 
 	hj, ok := reqRW.ResponseWriter.(http.Hijacker)
