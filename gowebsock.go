@@ -92,3 +92,11 @@ func CreateWebSockServer(conn net.Conn, headers string) (websock.WebSock, error)
 	return &webSock, err
 
 }
+
+func CreateWebSockClient(address string) (websock.WebSock, error) {
+
+	_, err := net.Dial("tcp", address)
+
+	return nil, err
+
+}
