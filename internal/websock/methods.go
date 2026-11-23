@@ -20,7 +20,14 @@ func (ws *GoWebSock) Read(buff *[]byte) (n int, err error) {
 	reader := wsframe.NewReader(frame)
 	defer reader.Close()
 
-	return reader.Read(ws.Conn, buff)
+	code, n, err := reader.Read(ws.Conn, buff)
+
+	if code == 0xFF {
+		ws.Close()
+		return
+	}
+
+	return
 
 }
 

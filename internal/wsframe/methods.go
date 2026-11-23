@@ -50,10 +50,10 @@ func getOpcodeToFrame(buff *[]byte) byte {
 
 }
 
-func (r *Reader) Read(conn net.Conn, buff *[]byte) (n int, err error) {
+func (r *Reader) Read(conn net.Conn, buff *[]byte) (code byte, n int, err error) {
 
 	if r.IsClosed() {
-		return 0, errors.New("It was not possible to read the frame because the reader is closed.")
+		return 0xFF, 0, errors.New("It was not possible to read the frame because the reader is closed.")
 	}
 
 	conn.Read(*buff)
@@ -68,9 +68,10 @@ func (r *Reader) Read(conn net.Conn, buff *[]byte) (n int, err error) {
 
 		data, _ := builder.Build(opcode, buff)
 		conn.Write(*data)
+		return 0xFF, 0, nil
 	}
 
-	return 0, nil
+	return opcode, 0, nil
 
 }
 

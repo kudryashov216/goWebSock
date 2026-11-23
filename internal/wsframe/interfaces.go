@@ -8,7 +8,7 @@ type WSFrame interface {
 
 type ReaderFrame interface {
 	WSFrame
-	Read(conn net.Conn, buff *[]byte) (n int, err error)
+	Read(conn net.Conn, buff *[]byte) (code byte, n int, err error)
 }
 
 type BuilderFrame interface {
