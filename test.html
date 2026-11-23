@@ -1,6 +1,7 @@
 <pre id="log"></pre>
 <button id="connect">Connect</button>
-<button id="send">Send Ping</button>
+<button id="send" disabled>Send Ping</button>
+<button id="disconnect" disabled>Disconnect</button>
 
 <script>
   const log = (msg) => {
@@ -9,20 +10,40 @@
     el.scrollTop = el.scrollHeight;
   };
 
+  const setButtons = (connected) => {
+    document.getElementById('connect').disabled = connected;
+    document.getElementById('send').disabled = !connected;
+    document.getElementById('disconnect').disabled = !connected;
+  };
+
   let ws;
 
   document.getElementById('connect').onclick = () => {
+    if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
+
     log('Connecting...');
+    setButtons(true);
     ws = new WebSocket('ws://localhost:8001/chat');
+
     ws.onopen = () => log('✅ OPEN');
     ws.onmessage = (e) => log('📩 ' + e.data);
-    ws.onclose = (e) => log(`❌ CLOSED code=${e.code} reason=${e.reason}`);
-    ws.onerror = (e) => log('💥 ERROR');
+    ws.onclose = (e) => {
+      log(`❌ CLOSED code=${e.code} reason=${e.reason || '(empty)'}`);
+      setButtons(false);
+    };
+    ws.onerror = () => log('💥 ERROR');
   };
 
   document.getElementById('send').onclick = () => {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
     ws.send('ping');
     log('📤 ping');
+  };
+
+  document.getElementById('disconnect').onclick = () => {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    // код 1000 — нормальное закрытие по инициативе клиента
+    ws.close(1000, 'client says bye');
+    log('🚪 close(1000) sent');
   };
 </script>

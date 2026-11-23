@@ -1,5 +1,7 @@
 package websock
 
+import "github.com/kudryashov216/goWebSock/internal/wsframe"
+
 func CurrentVersion() string {
 	return CURRENTVERSION
 }
@@ -12,47 +14,29 @@ func (ws *GoWebSock) SetConnect(headers string) error {
 
 }
 
-func (ws *GoWebSock) Read(buff []byte) (n int, err error) {
+func (ws *GoWebSock) Read(buff *[]byte) (n int, err error) {
 
-	return ws.Conn.Read(buff)
+	frame := wsframe.NewFrame(buff)
+	reader := wsframe.NewReader(frame)
+	defer reader.Close()
+
+	return reader.Read(ws.Conn, buff)
 
 }
 
-func (ws *GoWebSock) Send(data string) (int, error) {
+func (ws *GoWebSock) Send(data string) (n int, err error) {
 
-	var (
-		header, payload []byte
-	)
+	var buff []byte
 
-	payload = []byte(data)
+	buff = []byte(data)
 
-	header = append(header, 0x81)
+	frame := wsframe.NewFrame(&buff)
+	builder := wsframe.NewBuilder(frame)
+	defer builder.Close()
 
-	switch {
+	response, _ := builder.Build(0x01, &buff)
 
-	case len(payload) <= 125:
-
-		header = append(header, byte(len(payload)))
-
-	case len(payload) <= 65535:
-
-		header = append(header, 126, byte(len(payload)>>8), byte(len(payload)))
-
-	default:
-
-		length := uint64(len(payload))
-
-		header = append(header, 127)
-
-		for i := 7; i >= 0; i-- {
-			header = append(header, byte(length>>(8*i)))
-		}
-
-	}
-
-	frame := append(header, payload...)
-
-	return ws.Conn.Write(frame)
+	return ws.Conn.Write(*response)
 
 }
 

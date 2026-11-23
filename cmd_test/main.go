@@ -60,6 +60,8 @@ func main() {
 
 func Handler(rw http.ResponseWriter, r *http.Request) {
 
+	var buff = make([]byte, 4096)
+
 	var reqRW goWebSock.RequestRW
 
 	reqRW.Request = r
@@ -72,11 +74,21 @@ func Handler(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = webSock.Send("Hi. This websocket is written in the Go programming language. Welcome!")
+	_, err = webSock.Send("Hi. This is websocket is written in the Go programming language. Welcome!")
 
 	if err != nil {
 		log.Println(err.Error())
 		webSock.Close()
+	}
+
+	for {
+
+		webSock.Read(&buff)
+
+		if len(buff) > 0 {
+			webSock.Send("Pong!")
+		}
+
 	}
 
 }
