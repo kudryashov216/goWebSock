@@ -1,6 +1,7 @@
 package wsframe
 
 import (
+	"encoding/binary"
 	"errors"
 	"net"
 )
@@ -50,6 +51,67 @@ func getOpcodeToFrame(buff *[]byte) byte {
 
 }
 
+func (f *Frame) Unmask(data *[]byte) (*[]byte, error) {
+
+	if len(*data) < 2 {
+		return nil, errors.New("Insufficient bytes for the header.")
+	}
+
+	masked := (*data)[1]&0x80 != 0
+	payloadLen := int((*data)[1] & 0x7F)
+	headerLen := 2
+
+	switch payloadLen {
+	case 126:
+
+		if len((*data)) < 4 {
+			return nil, errors.New("The extended length byte is missing.")
+		}
+
+		payloadLen = int(binary.BigEndian.Uint16((*data)[2:4]))
+
+		headerLen = 4
+
+	case 127:
+
+		if len((*data)) < 10 {
+			return nil, errors.New("The byte length of 64 bits is missing.")
+		}
+
+		payloadLen = int(binary.BigEndian.Uint64((*data)[2:10]))
+
+		headerLen = 10
+
+	}
+
+	payloadStart := headerLen
+	if masked {
+
+		if len((*data)) < headerLen+4 {
+			return nil, errors.New("The byte of the masking key is missing.")
+		}
+
+		maskKey := (*data)[headerLen : headerLen+4]
+		payloadStart += 4
+
+		if len((*data)) < payloadStart+payloadLen {
+			return nil, errors.New("The payload is incomplete: read another byte from the socket.")
+		}
+
+		for i := 0; i < payloadLen; i++ {
+			(*data)[payloadStart+i] ^= maskKey[i%4]
+		}
+
+	} else if len((*data)) < payloadStart+payloadLen {
+		return nil, errors.New("The payload is incomplete: read another byte from the socket.")
+	}
+
+	payload := (*data)[payloadStart : payloadStart+payloadLen]
+
+	return &payload, nil
+
+}
+
 func (r *Reader) Read(conn net.Conn, buff *[]byte) (code byte, n int, err error) {
 
 	if r.IsClosed() {
@@ -59,17 +121,6 @@ func (r *Reader) Read(conn net.Conn, buff *[]byte) (code byte, n int, err error)
 	n, err = conn.Read(*buff)
 
 	opcode := getOpcodeToFrame(buff)
-
-	switch opcode {
-	case 0x08:
-		frame := NewFrame(buff)
-		builder := NewBuilder(frame)
-		defer builder.Close()
-
-		data, _ := builder.Build(opcode, buff)
-		conn.Write(*data)
-		return 0xFF, 0, nil
-	}
 
 	return opcode, n, err
 

@@ -1,10 +1,5 @@
 package goWebSock
 
-import (
-	"net/http"
-)
+import "github.com/kudryashov216/goWebSock/internal"
 
-type RequestRW struct {
-	Request        *http.Request
-	ResponseWriter http.ResponseWriter
-}
+type RequestRW internal.RequestRW

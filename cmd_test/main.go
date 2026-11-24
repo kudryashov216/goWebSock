@@ -19,7 +19,7 @@ func main() {
 	// defer listener.Close()
 
 	http.HandleFunc("/chat", Handler)
-	http.ListenAndServe(":8001", nil)
+	http.ListenAndServe(":8000", nil)
 
 	// for {
 
@@ -62,37 +62,33 @@ func Handler(rw http.ResponseWriter, r *http.Request) {
 
 	var buff = make([]byte, 4096)
 
-	var reqRW goWebSock.RequestRW
+	reqRW := goWebSock.NewRequestRW(rw, r)
 
-	reqRW.Request = r
-	reqRW.ResponseWriter = rw
-
-	webSock, err := goWebSock.CreateWebSockServerFromRequestRW(&reqRW)
+	webSock, err := goWebSock.CreateWebSockServerFromRequestRW(reqRW)
 
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 
-	_, err = webSock.Send("Hi. This is websocket is written in the Go programming language. Welcome!")
+	_, err = webSock.Send([]byte("Hi. This is websocket is written in the Go programming language. Welcome!"))
 
 	if err != nil {
 		log.Println(err.Error())
 		webSock.Close()
 	}
 
-	err = webSock.SoftClose()
-
-	if err == nil {
-		return
-	}
-
 	for {
 
 		webSock.Read(&buff)
 
-		if len(buff) > 0 {
-			webSock.Send("Pong!")
+		payload := webSock.GetPayload()
+
+		if len(*payload) > 0 {
+
+			fmt.Println(string(*payload))
+
+			_, err = webSock.Send([]byte("Pong!"))
 		}
 
 	}
