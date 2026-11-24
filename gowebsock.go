@@ -10,6 +10,7 @@ import (
 
 	"github.com/kudryashov216/goWebSock/internal/data"
 	"github.com/kudryashov216/goWebSock/internal/websock"
+	"github.com/kudryashov216/goWebSock/internal/websockclient"
 )
 
 func NewRequestRW(rw http.ResponseWriter, r *http.Request) *RequestRW {
@@ -93,7 +94,7 @@ func CreateWebSockServer(conn net.Conn, headers string) (websock.WebSock, error)
 
 }
 
-func CreateWebSockClient(address string) (websock.WebSock, error) {
+func CreateWebSockClient(address string) (websockclient.WebSockClient, error) {
 
 	_, err := net.Dial("tcp", address)
 

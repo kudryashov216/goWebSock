@@ -81,6 +81,12 @@ func Handler(rw http.ResponseWriter, r *http.Request) {
 		webSock.Close()
 	}
 
+	err = webSock.SoftClose()
+
+	if err == nil {
+		return
+	}
+
 	for {
 
 		webSock.Read(&buff)

@@ -47,6 +47,21 @@ func (ws *GoWebSock) Send(data string) (n int, err error) {
 
 }
 
+func (ws *GoWebSock) SoftClose() error {
+
+	buff := make([]byte, 4096)
+
+	frame := wsframe.NewFrame(&buff)
+
+	builder := wsframe.NewBuilder(frame)
+	builder.Build(0x08, &buff)
+
+	_, err := ws.Write(buff)
+
+	return err
+
+}
+
 func (ws *GoWebSock) Close() error {
 
 	return ws.Conn.Close()
