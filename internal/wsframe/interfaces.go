@@ -5,6 +5,7 @@ import "net"
 type WSFrame interface {
 	CloserFrame
 	Unmask(data *[]byte) (*[]byte, error)
+	ReadFrame() *[]byte
 }
 
 type ReaderFrame interface {

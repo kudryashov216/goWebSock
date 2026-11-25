@@ -1,6 +1,8 @@
 package websock
 
 import (
+	"context"
+
 	"github.com/kudryashov216/goWebSock/internal/wsframe"
 )
 
@@ -8,33 +10,31 @@ func CurrentVersion() string {
 	return CURRENTVERSION
 }
 
-func StartReader(ws *GoWebSock) {
+/*External*/
 
-	for {
-		ws.read()
+/*WebSock*/
+func (ws *GoWebSock) ReadFrames() (wsframe.WSFrame, error) {
+
+	n, err := ws.read()
+
+	if n == 0 {
+		return nil, err
 	}
 
-}
+	return ws.Frame, nil
 
-/*External*/
+}
 
 func (ws *GoWebSock) SetConnect(headers string) error {
 
 	_, err := ws.Conn.Write([]byte(headers))
-
 	return err
-
-}
-
-func (ws *GoWebSock) Read(buff *[]byte) (n int) {
-
-	return 0
 
 }
 
 func (ws *GoWebSock) Send(data []byte) (n int, err error) {
 
-	frame := wsframe.NewFrame(&data)
+	frame := wsframe.NewFrame(ws.Ctx, &data)
 	builder := wsframe.NewBuilder(frame)
 	defer builder.Close()
 
@@ -48,7 +48,7 @@ func (ws *GoWebSock) SendToString(text string) (n int, err error) {
 
 	buff := []byte(text)
 
-	frame := wsframe.NewFrame(&buff)
+	frame := wsframe.NewFrame(ws.Ctx, &buff)
 	builder := wsframe.NewBuilder(frame)
 	defer builder.Close()
 
@@ -58,23 +58,11 @@ func (ws *GoWebSock) SendToString(text string) (n int, err error) {
 
 }
 
-func (ws *GoWebSock) GetResponse() *[]byte {
-	return &ws.Response
-}
-
-func (ws *GoWebSock) GetPayload() *[]byte {
-	return &ws.Payload
-}
-
-func (ws *GoWebSock) GetPayloadToString() string {
-	return string(ws.Payload)
-}
-
 func (ws *GoWebSock) SoftClose(text string) error {
 
 	var buff []byte
 
-	frame := wsframe.NewFrame(&buff)
+	frame := wsframe.NewFrame(ws.Ctx, &buff)
 	builder := wsframe.NewBuilder(frame)
 
 	reasonClosure := []byte(text)
@@ -100,28 +88,35 @@ func (ws *GoWebSock) Close() error {
 
 }
 
+/*ContextWS*/
+func (cws *ContextWS) GetContext() context.Context {
+	return cws.Ctx
+}
+
+func (cws *ContextWS) Cancel() {
+	cws.Сancel()
+}
+
 /*Static*/
 
 func (ws *GoWebSock) read() (n int, err error) {
 
-	var buff []byte = make([]byte, 4096)
+	var buff = make([]byte, 4096)
 
-	frame := wsframe.NewFrame(&buff)
+	frame := wsframe.NewFrame(ws.Ctx, &buff)
 	reader := wsframe.NewReader(frame)
 	defer reader.Close()
 
 	code, n, err := reader.Read(ws.Conn, &buff)
 
 	if code == 0x08 {
-		ws.SoftClose("The connection was terminated at the client’s initiative.")
+		text := "The connection was terminated at the client’s initiative."
+		ws.SoftClose(text)
+		ws.ContextWS.Сancel()
 		ws.Close()
 	}
-	payload, _ := frame.Unmask(&buff)
 
-	ws.Frames = append(ws.Frames, buff)
-	ws.CurrentPayload = *payload
-	ws.CurrentResponse = buff
-	ws.NBytes = n
+	ws.Frame = frame
 
 	return
 

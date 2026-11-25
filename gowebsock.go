@@ -6,21 +6,22 @@ import (
 
 	"github.com/kudryashov216/goWebSock/internal"
 	"github.com/kudryashov216/goWebSock/internal/creater"
-	"github.com/kudryashov216/goWebSock/internal/websock"
 )
 
-func NewRequestRW(rw http.ResponseWriter, r *http.Request) *internal.RequestRW {
+func NewRequestRW(rw http.ResponseWriter, r *http.Request) *RequestRW {
 
-	return creater.NewRequestRW(rw, r)
+	reqRW := creater.NewRequestRW(rw, r)
 
-}
-
-func CreateWebSockServerFromRequestRW(reqRW *internal.RequestRW) (websock.WebSock, error) {
-
-	return creater.CreateWebSockServerFromRequestRW(reqRW)
+	return (*RequestRW)(reqRW)
 
 }
 
-func CreateWebSockServer(conn net.Conn, headers string) (websock.WebSock, error) {
+func CreateWebSockServerFromRequestRW(reqRW *RequestRW) (ContextWebSock, WebSock, error) {
+
+	return creater.CreateWebSockServerFromRequestRW((*internal.RequestRW)(reqRW))
+
+}
+
+func CreateWebSockServer(conn net.Conn, headers string) (ContextWebSock, WebSock, error) {
 	return creater.CreateWebSockServer(conn, headers)
 }

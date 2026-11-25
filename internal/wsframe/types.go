@@ -1,7 +1,11 @@
 package wsframe
 
+import "context"
+
 type Frame struct {
-	Buff *[]byte
+	Context context.Context
+	GUID    string
+	Data    *[]byte
 	CloserFrame
 }
 

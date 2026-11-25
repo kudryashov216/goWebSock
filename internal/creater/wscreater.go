@@ -1,6 +1,7 @@
 package creater
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/base64"
 	"errors"
@@ -20,19 +21,19 @@ func NewRequestRW(rw http.ResponseWriter, r *http.Request) *internal.RequestRW {
 
 }
 
-func CreateWebSockServerFromRequestRW(reqRW *internal.RequestRW) (websock.WebSock, error) {
+func CreateWebSockServerFromRequestRW(reqRW *internal.RequestRW) (websock.ContextWebSock, websock.WebSock, error) {
 
 	hj, ok := reqRW.ResponseWriter.(http.Hijacker)
 
 	if !ok {
-		return nil, errors.New("Failed to create a websocket.")
+		return nil, nil, errors.New("Failed to create a websocket.")
 	}
 
 	conn, _, err := hj.Hijack()
 
 	if err != nil {
 		conn.Close()
-		return nil, err
+		return nil, nil, err
 	}
 
 	headersMap := reqRW.Request.Header
@@ -42,15 +43,18 @@ func CreateWebSockServerFromRequestRW(reqRW *internal.RequestRW) (websock.WebSoc
 
 	headers := data.HeaderToString(&headersMap)
 
-	ws, err := CreateWebSockServer(conn, headers)
+	ctx, ws, err := CreateWebSockServer(conn, headers)
 
-	return ws, err
+	return ctx, ws, err
 
 }
 
-func CreateWebSockServer(conn net.Conn, headers string) (websock.WebSock, error) {
+func CreateWebSockServer(conn net.Conn, headers string) (websock.ContextWebSock, websock.WebSock, error) {
 
-	var err error
+	var (
+		err           error
+		parentContext context.Context = context.Background()
+	)
 
 	if len(headers) == 0 {
 
@@ -60,7 +64,7 @@ func CreateWebSockServer(conn net.Conn, headers string) (websock.WebSock, error)
 
 		if err != nil {
 			conn.Close()
-			return nil, err
+			return nil, nil, err
 		}
 
 		headers = string(buff[:n])
@@ -71,7 +75,7 @@ func CreateWebSockServer(conn net.Conn, headers string) (websock.WebSock, error)
 
 	if !ok {
 		conn.Close()
-		return nil, errors.New("The headers are not valid for creating a websocket.")
+		return nil, nil, errors.New("The headers are not valid for creating a websocket.")
 	}
 
 	headerMap := data.GetHeadersToMap(headers)
@@ -84,16 +88,18 @@ func CreateWebSockServer(conn net.Conn, headers string) (websock.WebSock, error)
 
 	responseHeaders := fmt.Sprintf("%s 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: %s\r\n\r\n", (*headerMap)["get"], accept)
 
+	ctx, cancel := context.WithCancel(parentContext)
+
 	webSock := websock.GoWebSock{
 		Conn:    conn,
 		Version: websock.CURRENTVERSION,
+		Ctx:     ctx,
+		Сancel:  cancel,
 	}
 
 	err = webSock.SetConnect(responseHeaders)
 
-	go websock.StartReader(&webSock)
-
-	return &webSock, err
+	return &webSock.ContextWS, &webSock, err
 
 }
 

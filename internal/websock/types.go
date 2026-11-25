@@ -1,14 +1,20 @@
 package websock
 
 import (
+	"context"
 	"net"
+
+	"github.com/kudryashov216/goWebSock/internal/wsframe"
 )
 
 type GoWebSock struct {
 	net.Conn
-	Version         string
-	Frames          [][]byte
-	CurrentResponse []byte
-	CurrentPayload  []byte
-	NBytes          int
+	ContextWS
+	Version string
+	Frame   wsframe.WSFrame
+}
+
+type ContextWS struct {
+	Ctx    context.Context
+	Сancel context.CancelFunc
 }

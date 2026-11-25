@@ -1,9 +1,12 @@
 package wsframe
 
 import (
+	"context"
 	"encoding/binary"
 	"errors"
 	"net"
+
+	"github.com/google/uuid"
 )
 
 func NewCloser() CloserFrame {
@@ -12,9 +15,9 @@ func NewCloser() CloserFrame {
 
 }
 
-func NewFrame(buff *[]byte) WSFrame {
+func NewFrame(ctx context.Context, buff *[]byte) WSFrame {
 
-	return &Frame{Buff: buff, CloserFrame: NewCloser()}
+	return &Frame{GUID: uuid.New().String(), Context: ctx, Data: buff, CloserFrame: NewCloser()}
 
 }
 
@@ -48,6 +51,12 @@ func getOpcodeToFrame(buff *[]byte) byte {
 	opcode := (*buff)[0] & 0x0F
 
 	return opcode
+
+}
+
+func (f *Frame) ReadFrame() *[]byte {
+
+	return f.Data
 
 }
 
