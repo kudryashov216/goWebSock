@@ -1,6 +1,7 @@
 package opcodes
 
 const (
-	SEND_STRING      byte = 0x1
-	SEND_BINARY_FILE byte = 0x2
+	CONTINUE_COPCODE byte = 0x0
+	STRING           byte = 0x1
+	BINARY_FILE      byte = 0x2
 )

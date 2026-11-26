@@ -1,49 +1,129 @@
-<pre id="log"></pre>
-<button id="connect">Connect</button>
-<button id="send" disabled>Send Ping</button>
-<button id="disconnect" disabled>Disconnect</button>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    #log {
+      height: 300px;       /* фиксированная высота лога */
+      overflow-y: auto;    /* прокрутка внутри блока */
+      border: 1px solid #444;
+      padding: 8px;
+      white-space: pre-wrap;
+    }
+    .controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    /* область превью бинарных файлов */
+    #images {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    #images img {
+      max-width: 200px;
+      max-height: 200px;
+      border: 1px solid #444;
+    }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <button id="connect">Connect ×3</button>
+    <button id="send" disabled>Send Ping</button>
+    <button id="disconnect" disabled>Disconnect All</button>
+  </div>
 
-<script>
-  const log = (msg) => {
-    const el = document.getElementById('log');
-    el.textContent += msg + '\n';
-    el.scrollTop = el.scrollHeight;
-  };
+  <pre id="log"></pre>
+  <div id="images"></div>
 
-  const setButtons = (connected) => {
-    document.getElementById('connect').disabled = connected;
-    document.getElementById('send').disabled = !connected;
-    document.getElementById('disconnect').disabled = !connected;
-  };
-
-  let ws;
-
-  document.getElementById('connect').onclick = () => {
-    if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
-
-    log('Connecting...');
-    setButtons(true);
-    ws = new WebSocket('ws://localhost:8001/chat');
-
-    ws.onopen = () => log('✅ OPEN');
-    ws.onmessage = (e) => log('📩 ' + e.data);
-    ws.onclose = (e) => {
-      log(`❌ CLOSED code=${e.code} reason=${e.reason || '(empty)'}`);
-      setButtons(false);
+  <script>
+    const log = (msg) => {
+      const el = document.getElementById('log');
+      el.textContent += msg + '\n';
+      el.scrollTop = el.scrollHeight;
     };
-    ws.onerror = () => log('💥 ERROR');
-  };
 
-  document.getElementById('send').onclick = () => {
-    if (!ws || ws.readyState !== WebSocket.OPEN) return;
-    ws.send('ping');
-    log('📤 ping');
-  };
+    const CONNECTION_COUNT = 3;
+    const sockets = new Map();
+    let binaryCounter = 0;
 
-  document.getElementById('disconnect').onclick = () => {
-    if (!ws || ws.readyState !== WebSocket.OPEN) return;
-    // код 1000 — нормальное закрытие по инициативе клиента
-    ws.close(1000, 'client says bye');
-    log('🚪 close(1000) sent');
-  };
-</script>
+    const setButtons = () => {
+      const anyActive = sockets.size > 0;
+      document.getElementById('connect').disabled = anyActive;
+      document.getElementById('send').disabled = !anyActive;
+      document.getElementById('disconnect').disabled = !anyActive;
+    };
+
+    // отрисовка бинарного фрейма как картинки
+    const showImage = (blob) => {
+      const url = URL.createObjectURL(blob);
+      const img = document.createElement('img');
+      img.src = url;
+      img.onload = () => URL.revokeObjectURL(url); // данные уже в DOM, ссылку можно освобождать
+      img.onerror = () => {
+        // не картинка — показываем инфо о бинарных данных
+        log(`[ws] 📦 binary blob: ${blob.size} bytes, не удалось отобразить как изображение`);
+        URL.revokeObjectURL(url);
+      };
+      document.getElementById('images').appendChild(img);
+    };
+
+    const createSocket = (id) => {
+      const ws = new WebSocket('ws://localhost:8000/chat');
+      sockets.set(id, ws);
+
+      ws.onopen = () => {
+        log(`[ws#${id}] ✅ OPEN`);
+        if (id === 1) setButtons();
+      };
+
+      ws.onmessage = (e) => {
+        if (e.data instanceof Blob) {
+          // binary-фрейм: пробуем отобразить как изображение
+          binaryCounter++;
+          log(`[ws#${id}] 📦 binary #${binaryCounter}: ${e.data.size} bytes`);
+          showImage(e.data);
+        } else {
+          log(`[ws#${id}] 📩 ${e.data}`);
+        }
+      };
+
+      ws.onclose = (e) => {
+        log(`[ws#${id}] ❌ CLOSED code=${e.code} reason=${e.reason || '(empty)'}`);
+        sockets.delete(id);
+        setButtons();
+      };
+      ws.onerror = () => log(`[ws#${id}] 💥 ERROR`);
+
+      return ws;
+    };
+
+    document.getElementById('connect').onclick = () => {
+      if (sockets.size > 0) return;
+
+      for (let i = 1; i <= CONNECTION_COUNT; i++) {
+        log(`[ws#${i}] Connecting...`);
+        createSocket(i);
+      }
+    };
+
+    document.getElementById('send').onclick = () => {
+      sockets.forEach((ws, id) => {
+        if (ws.readyState !== WebSocket.OPEN) return;
+        ws.send(`ping from ws#${id}`);
+        log(`[ws#${id}] 📤 ping`);
+      });
+    };
+
+    document.getElementById('disconnect').onclick = () => {
+      sockets.forEach((ws, id) => {
+        ws.close(1000, `client #${id} says bye`);
+        log(`[ws#${id}] 🚪 close(1000) sent`);
+      });
+    };
+  </script>
+</body>
+</html>

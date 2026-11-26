@@ -1,16 +1,13 @@
 package main
 
 import (
-	"bufio"
 	"context"
-	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/kudryashov216/goWebSock"
+	"github.com/kudryashov216/goWebSock/opcodes"
 )
 
 func main() {
@@ -99,74 +96,74 @@ func Reader(ws goWebSock.WebSock) {
 
 func Sender(ctx context.Context, ws goWebSock.WebSock) {
 
-	// fileArray := [2]string{"C:\\Users\\Nkudryashov\\Desktop\\web socket.png", "C:\\Users\\Nkudryashov\\Desktop\\TaskManager.png"}
+	fileArray := [2]string{"C:\\Users\\Nkudryashov\\Desktop\\web socket.png", "C:\\Users\\Nkudryashov\\Desktop\\TaskManager.png"}
 
-	// for _, file := range fileArray {
+	for _, file := range fileArray {
 
-	// 	bytes, _ := os.ReadFile(file)
+		bytes, _ := os.ReadFile(file)
 
-	// 	_, err := ws.Send(opcodes.SEND_BINARY_FILE, bytes)
+		_, err := ws.Send(opcodes.BINARY_FILE, bytes)
 
-	// 	if err != nil {
-	// 		ws.Close()
-	// 		return
-	// 	}
-
-	// 	_, err = ws.SendToString("Hello")
-
-	// 	if err != nil {
-	// 		ws.Close()
-	// 		return
-	// 	}
-
-	// }
-
-	reader := bufio.NewReader(os.Stdin)
-
-	type readResult struct {
-		line string
-		err  error
-	}
-	lineCh := make(chan readResult, 1)
-
-	for {
-		// читаем в отдельной горутине — чтение блокирующее, его не отменить
-		go func() {
-			line, err := reader.ReadString('\n')
-			lineCh <- readResult{line, err}
-		}()
-
-		select {
-		case <-ctx.Done():
-			// контекст отменили извне — корректно закрываем соединение и выходим
-			ws.SoftClose("bye")
+		if err != nil {
+			ws.Close()
 			return
-
-		case r := <-lineCh:
-			if r.err != nil {
-				if errors.Is(r.err, io.EOF) {
-					fmt.Println("stdin закрыт — закрываем соединение")
-					ws.SoftClose("bye")
-					return
-				}
-				fmt.Println("ошибка чтения stdin:", r.err)
-				return
-			}
-
-			line := strings.TrimSpace(r.line)
-			if line == "" {
-				continue
-			}
-			if line == "/quit" {
-				ws.SoftClose("bye")
-				return
-			}
-
-			if _, err := ws.SendToString(line); err != nil {
-				fmt.Println("ошибка отправки:", err)
-				return
-			}
 		}
+
+		_, err = ws.SendToString("Hello")
+
+		if err != nil {
+			ws.Close()
+			return
+		}
+
 	}
+
+	// reader := bufio.NewReader(os.Stdin)
+
+	// type readResult struct {
+	// 	line string
+	// 	err  error
+	// }
+	// lineCh := make(chan readResult, 1)
+
+	// for {
+	// 	// читаем в отдельной горутине — чтение блокирующее, его не отменить
+	// 	go func() {
+	// 		line, err := reader.ReadString('\n')
+	// 		lineCh <- readResult{line, err}
+	// 	}()
+
+	// 	select {
+	// 	case <-ctx.Done():
+	// 		// контекст отменили извне — корректно закрываем соединение и выходим
+	// 		ws.SoftClose("bye")
+	// 		return
+
+	// 	case r := <-lineCh:
+	// 		if r.err != nil {
+	// 			if errors.Is(r.err, io.EOF) {
+	// 				fmt.Println("stdin закрыт — закрываем соединение")
+	// 				ws.SoftClose("bye")
+	// 				return
+	// 			}
+	// 			fmt.Println("ошибка чтения stdin:", r.err)
+	// 			return
+	// 		}
+
+	// 		line := strings.TrimSpace(r.line)
+	// 		if line == "" {
+	// 			continue
+	// 		}
+	// 		if line == "/quit" {
+	// 			ws.SoftClose("bye")
+	// 			return
+	// 		}
+
+	// 		if _, err := ws.SendToString(line); err != nil {
+	// 			fmt.Println("ошибка отправки:", err)
+	// 			return
+	// 		}
+	// 	}
+	// }
 
 }

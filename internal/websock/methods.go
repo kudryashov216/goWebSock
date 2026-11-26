@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/kudryashov216/goWebSock/internal/wsframe"
+	"github.com/kudryashov216/goWebSock/opcodes"
 )
 
 func CurrentVersion() string {
@@ -51,7 +52,7 @@ func (ws *GoWebSock) SendToString(text string) (n int, err error) {
 	builder := wsframe.NewBuilder(frame)
 	defer builder.Close()
 
-	response, _ := builder.Build(0x01, &buff)
+	response, _ := builder.Build(opcodes.STRING, &buff)
 
 	return ws.Conn.Write(*response)
 
