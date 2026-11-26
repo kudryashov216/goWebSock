@@ -1,6 +1,8 @@
 package wsframe
 
-import "net"
+import (
+	"net"
+)
 
 type WSFrame interface {
 	CloserFrame

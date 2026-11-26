@@ -148,7 +148,7 @@ func (b *Builder) Build(opcode byte, buff *[]byte) (data *[]byte, err error) {
 
 	payload = *buff
 
-	header = append(header, FIN|opcode)
+	header = append(header, byte(FIN|opcode))
 
 	switch {
 

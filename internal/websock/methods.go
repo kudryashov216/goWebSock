@@ -2,6 +2,8 @@ package websock
 
 import (
 	"context"
+	"io"
+	"net"
 
 	"github.com/kudryashov216/goWebSock/internal/wsframe"
 )
@@ -16,12 +18,9 @@ func CurrentVersion() string {
 func (ws *GoWebSock) ReadFrames() (wsframe.WSFrame, error) {
 
 	n, err := ws.read()
+	ws.Frame.(*wsframe.Frame).NBytes = n
 
-	if n == 0 {
-		return nil, err
-	}
-
-	return ws.Frame, nil
+	return ws.Frame, err
 
 }
 
@@ -32,13 +31,13 @@ func (ws *GoWebSock) SetConnect(headers string) error {
 
 }
 
-func (ws *GoWebSock) Send(data []byte) (n int, err error) {
+func (ws *GoWebSock) Send(opcode byte, data []byte) (n int, err error) {
 
 	frame := wsframe.NewFrame(ws.Ctx, &data)
 	builder := wsframe.NewBuilder(frame)
 	defer builder.Close()
 
-	response, _ := builder.Build(0x01, &data)
+	response, _ := builder.Build(opcode, &data)
 
 	return ws.Conn.Write(*response)
 
@@ -88,6 +87,18 @@ func (ws *GoWebSock) Close() error {
 
 }
 
+func (ws *GoWebSock) RemoteAddress() net.Addr {
+
+	return ws.Conn.RemoteAddr()
+
+}
+
+func (ws *GoWebSock) LocalAddress() net.Addr {
+
+	return ws.Conn.LocalAddr()
+
+}
+
 /*ContextWS*/
 func (cws *ContextWS) GetContext() context.Context {
 	return cws.Ctx
@@ -110,6 +121,7 @@ func (ws *GoWebSock) read() (n int, err error) {
 	code, n, err := reader.Read(ws.Conn, &buff)
 
 	if code == 0x08 {
+		err = io.EOF
 		text := "The connection was terminated at the client’s initiative."
 		ws.SoftClose(text)
 		ws.ContextWS.Сancel()

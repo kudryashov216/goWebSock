@@ -23,5 +23,13 @@ func CreateWebSockServerFromRequestRW(reqRW *RequestRW) (ContextWebSock, WebSock
 }
 
 func CreateWebSockServer(conn net.Conn, headers string) (ContextWebSock, WebSock, error) {
+
 	return creater.CreateWebSockServer(conn, headers)
+
+}
+
+func CreateWebSockClient(address string) (WebSockClient, error) {
+
+	return creater.CreateWebSockClient(address)
+
 }

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -75,13 +74,6 @@ func Handler(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = webSock.Send([]byte("Hi. This is websocket is written in the Go programming language. Welcome!"))
-
-	if err != nil {
-		log.Println(err.Error())
-		webSock.Close()
-	}
-
 	go Reader(webSock)
 	go Sender(ctx.GetContext(), webSock)
 
@@ -106,6 +98,28 @@ func Reader(ws goWebSock.WebSock) {
 }
 
 func Sender(ctx context.Context, ws goWebSock.WebSock) {
+
+	// fileArray := [2]string{"C:\\Users\\Nkudryashov\\Desktop\\web socket.png", "C:\\Users\\Nkudryashov\\Desktop\\TaskManager.png"}
+
+	// for _, file := range fileArray {
+
+	// 	bytes, _ := os.ReadFile(file)
+
+	// 	_, err := ws.Send(opcodes.SEND_BINARY_FILE, bytes)
+
+	// 	if err != nil {
+	// 		ws.Close()
+	// 		return
+	// 	}
+
+	// 	_, err = ws.SendToString("Hello")
+
+	// 	if err != nil {
+	// 		ws.Close()
+	// 		return
+	// 	}
+
+	// }
 
 	reader := bufio.NewReader(os.Stdin)
 

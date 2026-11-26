@@ -6,6 +6,7 @@ type Frame struct {
 	Context context.Context
 	GUID    string
 	Data    *[]byte
+	NBytes  int
 	CloserFrame
 }
 
